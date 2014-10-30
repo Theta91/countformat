@@ -1,0 +1,115 @@
+/*******************************************************************************
+ * This script creates a 'Format Count' menu to the right of the Help Menu,
+ * presenting options for totaling the number of formatted cells in a named
+ * range.                                                                     
+   answerRange:       named range that corresponds to answer space            */
+   var answerRange    = 'answers';
+
+/* countFormat totals the number of cells that are bold, strikethrough, italics,
+ * or a background color (in hex, with leading #).
+   tallyRange:        named range of 1 cell; where tally is put               */
+   var tallyRange     = 'tally';
+ 
+/* countClaims totals the number of claimed and written questions based on the
+ * background color of the cells and the bold state.
+ * Anyone, even Chris Ray, will have to adjust if their answer sheet is not as:
+ * Packet 1 TU - Packet 1 B - Packet 2 TU - Packet 2 B - Packet 3 TU - etc.
+   numWriters:        number of writers                                       */
+   var numWriters     = 7;
+/* The following should be named ranges with 1 column and numWriters rows.
+   colorRange:        background colors of cells in this range are used to
+                      determine claims & written
+   claimRange:        where the number of claims by a writer claims is put
+   writtenTURange:    where the number of written tossups by a writer is put
+   writtenBRange:     where the number of written bonuses by a writer is put  */
+   var colorRange     = 'colors';
+   var claimRange     = 'claims';
+   var writtenTURange = 'writtenTU';
+   var writtenBRange  = 'writtenB';
+/******************************************************************************/
+function onOpen(e) {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Format Count')
+    .addItem('Bold', 'countBold')
+    .addItem('Strikethrough', 'countStrike')
+    .addItem('Italics', 'countItalic')
+    .addItem('By Color', 'countColor')
+    .addSeparator()
+    .addItem('Claims & Written', 'countClaim')
+    .addToUi(); }
+
+function countBold() {
+  countFormat("bold"); }
+
+function countStrike() {
+  countFormat("strike"); }
+
+function countItalic() {
+  countFormat("italic"); }
+
+function countColor() {
+  var ui = SpreadsheetApp.getUi();
+  var box = ui.prompt('Enter hex code, with leading #:',ui.ButtonSet.OK_CANCEL);
+  var button = box.getSelectedButton();
+  var color = box.getResponseText();
+  if (button == ui.Button.OK) {
+    countFormat("background", color); } }
+
+function countFormat (test, opt_color) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var cells = ss.getRangeByName(answerRange);
+  var tally = ss.getRangeByName(tallyRange);
+  
+  var testCase = test;
+  switch (test) {
+    case "strike":
+      var rangeFormat = cells.getFontLines();
+      testCase = "line-through";
+      break;
+    case "background":
+      var rangeFormat = cells.getBackgrounds();
+      testCase = opt_color;
+      break;
+    case "italic":
+      var rangeFormat = cells.getFontStyles();
+      break;
+    case "bold":
+      var rangeFormat = cells.getFontWeights();
+      break;
+    default:
+      throw ("invalid format"); }
+  
+  var total = 0;
+  for(var p in rangeFormat) {
+    for(var q in rangeFormat[p]) {
+      if(rangeFormat[p][q] == testCase) {
+        total += 1; } } }
+  
+  tally.setValue(total); }
+
+function countClaim() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var cells = ss.getRangeByName(answerRange);
+  var color = ss.getRangeByName(colorRange);
+  var claim = ss.getRangeByName(claimRange);
+  var writtenTU = ss.getRangeByName(writtenTURange);
+  var writtenB = ss.getRangeByName(writtenBRange);
+  var rangeBackground = cells.getBackgrounds();
+  var rangeBold = cells.getFontWeights();
+  var rangeColor = color.getBackgrounds();
+  var claimTotal = 0, writtenTUTotal = 0, writtenBTotal = 0;
+  
+  for(var m in rangeColor) {
+    for(var p in rangeBackground) {
+      for(var q in rangeBackground[p]) {
+        if(rangeBackground[p][q] == rangeColor[m][0]) {
+          claimTotal += 1;
+          if(rangeBold[p][q] == "bold") {
+            if(q % 2 == 0 || q == 0) {
+              writtenTUTotal += 1; }
+            else {
+              writtenBTotal += 1; } } } } }
+    claim.getCell(+m+1,1).setValue(claimTotal);
+    writtenTU.getCell(+m+1,1).setValue(writtenTUTotal);
+    writtenB.getCell(+m+1,1).setValue(writtenBTotal);
+    claimTotal = writtenTUTotal = writtenBTotal = 0; } }
