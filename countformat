@@ -14,9 +14,8 @@
  * background color of the cells and the bold state.
  * Anyone, even Chris Ray, will have to adjust if their answer sheet is not as:
  * Packet 1 TU - Packet 1 B - Packet 2 TU - Packet 2 B - Packet 3 TU - etc.
-   numWriters:        number of writers                                       */
-   var numWriters     = 7;
-/* The following should be named ranges with 1 column and numWriters rows.
+
+ * The following should be 1-column named ranges.
    colorRange:        background colors of cells in this range are used to
                       determine claims & written
    claimRange:        where the number of claims by a writer claims is put
