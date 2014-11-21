@@ -104,6 +104,9 @@ function countClaim() {
           claimTotal += 1;
           if(rangeBold[p][q] == "bold") {
             if(q % 2 == 0 || q == 0) {
+            /* Uncomment below and comment above line if you have TU & B
+               in alternating rows, not alternating columns */
+            /*if(p % 2 == 0 || p == 0) {*/
               writtenTUTotal += 1; }
             else {
               writtenBTotal += 1; } } } } }
