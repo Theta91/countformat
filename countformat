@@ -15,13 +15,15 @@
  * Anyone, even Chris Ray, will have to adjust if their answer sheet is not as:
  * Packet 1 TU - Packet 1 B - Packet 2 TU - Packet 2 B - Packet 3 TU - etc.
  * The following should be 1-column named ranges.
-   colorRange:        background colors of cells in this range are used to
-                      determine claims & written
+   tagRange:          background colors of cells in this range are used to
+                      determine claims & written; writer tags in this range are
+                      used to update background colors of claimed cells
    claimRange:        where the number of claims by a writer claims is put
    writtenTURange:    where the number of written tossups by a writer is put
    writtenBRange:     where the number of written bonuses by a writer is put  */
-   var colorRange     = 'colors';
-   var claimRange     = 'claims';
+   var tagRange       = 'tags';
+   var claimTURange   = 'claimTU';
+   var claimBRange    = 'claimB';
    var writtenTURange = 'writtenTU';
    var writtenBRange  = 'writtenB';
 /******************************************************************************/
@@ -88,29 +90,41 @@ function countFormat (test, opt_color) {
 function countClaim() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var cells = ss.getRangeByName(answerRange);
-  var color = ss.getRangeByName(colorRange);
-  var claim = ss.getRangeByName(claimRange);
+  var tags = ss.getRangeByName(tagRange);
+  var claimTU = ss.getRangeByName(claimTURange);
+  var claimB = ss.getRangeByName(claimBRange);
   var writtenTU = ss.getRangeByName(writtenTURange);
   var writtenB = ss.getRangeByName(writtenBRange);
-  var rangeBackground = cells.getBackgrounds();
-  var rangeBold = cells.getFontWeights();
-  var rangeColor = color.getBackgrounds();
-  var claimTotal = 0, writtenTUTotal = 0, writtenBTotal = 0;
+  var cellBackgrounds = cells.getBackgrounds();
+  var cellBold = cells.getFontWeights();
+  var cellValues = cells.getValues();
+  var tagColors = tags.getBackgrounds();
+  var tagValues = tags.getValues();
+  var claimTUTotal = 0, claimBTotal = 0, writtenTUTotal = 0, writtenBTotal = 0;
   
-  for(var m in rangeColor) {
-    for(var p in rangeBackground) {
-      for(var q in rangeBackground[p]) {
-        if(rangeBackground[p][q] == rangeColor[m][0]) {
-          claimTotal += 1;
-          if(rangeBold[p][q] == "bold") {
-            if(q % 2 == 0 || q == 0) {
+  for(var m in tagColors) {
+    for(var p in cellBackgrounds) {
+      for(var q in cellBackgrounds[p]) {
+        if(tagValues[m][0].toString().length > 0) {
+          if(cellValues[p][q].toString().indexOf(tagValues[m][0].toString()) > -1) {
+            cellBackgrounds[p][q] = tagColors[m][0] } }
+        if(cellBackgrounds[p][q] == tagColors[m][0]) {
+          if(p % 2 == 0 || p == 0) {
+            claimTUTotal += 1; }
+          else {
+            claimBTotal +=1; }
+          if(cellBold[p][q] == "bold") {
+            if(p % 2 == 0 || p == 0) {
             /* Uncomment below and comment above line if you have TU & B
-               in alternating rows, not alternating columns */
-            /*if(p % 2 == 0 || p == 0) {*/
+               in alternating columns instead of alternating rows */
+            /*if(q % 2 == 0 || q == 0) {*/
               writtenTUTotal += 1; }
             else {
               writtenBTotal += 1; } } } } }
-    claim.getCell(+m+1,1).setValue(claimTotal);
+    claimTU.getCell(+m+1,1).setValue(claimTUTotal);
+    claimB.getCell(+m+1,1).setValue(claimBTotal);
     writtenTU.getCell(+m+1,1).setValue(writtenTUTotal);
     writtenB.getCell(+m+1,1).setValue(writtenBTotal);
-    claimTotal = writtenTUTotal = writtenBTotal = 0; } }
+    claimTUTotal = claimBTotal = writtenTUTotal = writtenBTotal = 0; }
+
+  cells.setBackgrounds(cellBackgrounds); }
